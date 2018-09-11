@@ -1,21 +1,6 @@
-# Vehicle Detection
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+# Vehicle Detection Project Report
 
-
-In this project, your goal is to write a software pipeline to detect vehicles in a video (start with the test_video.mp4 and later implement on full project_video.mp4), but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
-
-Creating a great writeup:
----
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You can submit your writeup in markdown or use another method and submit a pdf instead.
-
-The Project
----
-
-The goals / steps of this project are the following:
+The goals of this project are the following:
 
 * Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
 * Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
@@ -24,14 +9,93 @@ The goals / steps of this project are the following:
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
 
-Here are links to the labeled data for [vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles.zip) and [non-vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles.zip) examples to train your classifier.  These example images come from a combination of the [GTI vehicle image database](http://www.gti.ssr.upm.es/data/Vehicle_database.html), the [KITTI vision benchmark suite](http://www.cvlibs.net/datasets/kitti/), and examples extracted from the project video itself.   You are welcome and encouraged to take advantage of the recently released [Udacity labeled dataset](https://github.com/udacity/self-driving-car/tree/master/annotations) to augment your training data.  
+[//]: # (Image References)
+[image1]: ./output_images/test_images.png
+[image2]: ./output_images/hog_features.png
+[image3]: ./output_images/norm_features.png
+[image4]: ./output_images/test1.jpg
+[image5]: ./output_images/test2.jpg
+[image6]: ./output_images/test3.jpg
+[image7]: ./output_images/test4.jpg
+[image8]: ./output_images/test5.jpg
+[image9]: ./output_images/test6.jpg
+[video1]: ./output_video.mp4
 
-Some example images for testing your pipeline on single frames are located in the `test_images` folder.  To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `ouput_images`, and include them in your writeup for the project by describing what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+### Implementation
+This project was implemented using the `car_detector.ipynb` jupyter notebook . The resulting images can be found under the test images folder. The resulting video can be found under the root folder.
 
-**As an optional challenge** Once you have a working pipeline for vehicle detection, add in your lane-finding algorithm from the last project to do simultaneous lane-finding and vehicle detection!
+### 1. Trainning data
 
-**If you're feeling ambitious** (also totally optional though), don't stop there!  We encourage you to go out and take video of your own, and show us how you would implement this project on a new video!
+The data used throught this project is a combination of vehicle and non-vehicle examples from the GTI vehicle image database and the KITTI vision benchmark suite, supplied as part of this project. They are located in the data folder under two separate folders. Data is loaded into two arrays, car and notcars. Section one of the IPython notebook contains the relevant code. A count of 8792  cars and 8968  non-cars is loaded. A sample from the `vehicle` and `non-vehicle` classes can be seen in the figure below.
+![alt text][image1]
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+## 2. Feature extraction
+
+### 2.1 Histogram of Oriented Gradients (HOG)
+
+The code for this step is contained in the second section of the IPython notebook `car_detector.ipynb`). HOG features were estimated using `skimage.hog()` . A wrapper method was created, `get_hog_features()` that returns the estimated features and an image visualization, if specified. The parameters used were deduced after experimentation. The images were converted from to `YCrCb`. An example using the HOG parameters of `orientations=9`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)` can be seen below:
+
+![alt text][image2]
+
+### 2.2 Binned color features
+
+Binned color features are implemented within `bin_spatial()`
+
+### 2.3 Color histogram features
+
+Color histogram features are implemented within `color_hist()`
+
+### 2.4 Combined features
+
+The methods described in the previous three sections are combined within `extract_features()`. In addition to that, HOG features can be calculated for each channel individually or for all three channels combined. The later was the option that gave better results. In the example seen in the figure below, the extracted features were also normalized. The same parameters were used as in the previous sections. Spatial size and histogram bin were both set to 32.
+
+![alt text][image3]
+
+#### 3. Classifier trainning and optimization
+
+A linear SVM was trainned using the existing data. 20% of data was used as a trainning set. The data was split using `sklearn.cross_validation.train_test_split()`. The initial test accuracy of the SVM was 0.9885. However, using `sklearn.model_selection.GridSearchCV()` an optimal value of C was obtained. Using this value the accuracy of the SVM was increased to 0.991. The trainned SVM, along with the parameters used was saved into a pickle file (`classifier.p`).
+
+### 4. Sliding Window Search
+
+The sliding window implementation is described in section four of the IPython notebook. In particular within the `find_cars()` method. This method returns a list of all the bounding boxes detected using the previously described feature detector method. This method, in addition to the parameters required for feature detection, it also takes a scale parameter and a set of pixel coordinates for the y-axis. The pixel coordinates are used to restict the search area and the scale parameter to scale the search box accordingly.
+After experimenting with various values, it was found that greater scales worked better for detecting larger objects which mostly appear at the lower part of the screen. Hence, three search areas were define, each one with a different scale. The following search vector was specified:
+
+    search_vec = [(350, 500, 1.3), (400, 650, 1.8), (500, 700, 2.5)]
+
+The search was applied on all image found within the test_images folder. For each test image the bounding boxer detected were filtered using a heatmap. The heatmap for each image, as well as the corresponding bounding box can be seen in the figures below:
+
+![alt text][image4]
+![alt text][image5]
+![alt text][image6]
+![alt text][image7]
+![alt text][image8]
+![alt text][image9]
+
+### 5. Video Pipeline
+
+The video pipeline used consists of three stages:
+
+    * find_cars()
+    * filter_bboxes()
+    * draw_boxes()
+
+During the first stage, a search was performed on three scales, in three different overlapping regions within each frame, using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector.
+During the second stage the previously generated bounding box list was filtered. The resulting bounding boxes were filtered.
+During the third stage the bounding boxes were drawn. The pipeline is encapsulated within `car_detector()`. The method takes a single image/frame as an input parameter and returns an image with the bounding boxes drawn. The resulting video can be seen here:
+
+![alt text][video1]
+
+### 6.Discussion
+
+The most obvious problem is related to the resolution of the algorithm. When two cars are very close to each other or overlapping, particularly at the bottom of each frame, were the scale is quite large, are detected as one. One possible way of going around this, is to use another tracking algorithm such as optical flow. The HOG-detector should be used to detect a car and the optical flow, to track it from frame to frame. In this way one or more cars can be detected simultaneously, even if they partially overlap. When a car cannot be tracked, the HOG detector could be re-used. 
+
+In addition to that, the algorithm is computationaly very expensive, yielding an anacceptably low framerate for real time applications. Restricting its application to every X number of frames would remedy this problem. Given that an acceptable framerate is 30Fps, X should be set as X = 30 / algorithm_fps.
+
+The method that computes the bounding boxes is currently limited to a video with a vertical resolution of 720. The method should be modified to accept any video size.
+
+In order to combine this detector with the camera calibration project, it should be refactored into a class. The lane coordinates should also be used to restrict the search area in the x-axis, yielding in a higher framerate.
+
+The HOG detector operates on blocks of images, therefore it should run significantly faster on a GPU, if available.
+
+
 

@@ -63,7 +63,7 @@ After experimenting with various values(values from 1.1 to 3 where tested, with 
 
     search_vec = [(350, 500, 1.3), (400, 650, 1.8), (500, 700, 2.5)]
 
-The search was applied on all images found within the test_images folder. For each test image the bounding boxes detected were filtered using a heatmap. The heatmap for each image, as well as the corresponding bounding box can be seen in the figures below:
+The search was applied on all images found within the test_images folder. For each test image a heatmap was constructed and thresholded. Individual cars were detected using `scipy.ndimage.measurements.label()`. A bounding box was drawn for each detection. The heatmap for each image, as well as the corresponding bounding box can be seen in the figures below:
 
 ![alt text][image4]
 ![alt text][image5]

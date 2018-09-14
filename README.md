@@ -84,7 +84,7 @@ During the first stage, a search was performed on three scales, in three differe
 During the second stage the previously generated bounding box list was filtered.
 During the third stage the bounding boxes were drawn. The pipeline is encapsulated within `car_detector()`. The method takes a single image/frame as an input parameter and returns an image with the bounding boxes overlayed. The resulting video can be seen here:
 
-![alt text][video1]
+[![CarDetector](https://i9.ytimg.com/vi/zwdcZViScFE/hqdefault.jpg?sqp=CPiI8dwF&rs=AOn4CLCVJ8B4bJa3IjkbSklIsqdtXTgGHg)](https://www.youtube.com/embed/zwdcZViScFE)
 
 ### 6.Discussion
 
